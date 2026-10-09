@@ -6,7 +6,7 @@ import java.util.Locale;
 
 public class Repartidor {
 
-    public enum Estado() {
+    public enum Estado {
         DISPONIBLE,
         NO_DISPONIBLE
     }
@@ -16,7 +16,7 @@ public class Repartidor {
     private String zona;
     private Estado estadoOperativo;
 
-    public Repartidor(String identificacion, String nombre, String zona, String estadoOperativo) {
+    public Repartidor(String identificacion, String nombre, String zona, Estado estadoOperativo) {
         setIdentificacion(identificacion);
         setNombre(nombre);
         setZona(zona);
@@ -28,7 +28,7 @@ public class Repartidor {
     }
 
     public void setIdentificacion(String identificacion) {
-        if (identificacion == null |: identificacion.trim().isEmpty()) {
+        if (identificacion == null || identificacion.trim().isEmpty()) {
             throw new IllegalArgumentException("La identificación no puede ser nula ni vacía");
         }
         this.identificacion = identificacion;
