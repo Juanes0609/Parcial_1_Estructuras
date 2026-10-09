@@ -28,7 +28,7 @@ public class Repartidor {
     }
 
     public void setIdentificacion(String identificacion) {
-        if (identificacion == null | identificacion.trim().isEmpty()) {
+        if (identificacion == null |: identificacion.trim().isEmpty()) {
             throw new IllegalArgumentException("La identificación no puede ser nula ni vacía");
         }
         this.identificacion = identificacion;
