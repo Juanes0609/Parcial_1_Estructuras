@@ -1,6 +1,8 @@
 package modelo;
 
-public class Paquete {
+import java.util.Comparator;
+
+public class Paquete implements Comparable<Paquete> {
     private String codigo;
     private String destino;
     private double peso;
@@ -21,6 +23,11 @@ public class Paquete {
 
     public Paquete(String codigo, String destino, double peso, int tiempoEstimado){
         this(codigo, destino, peso, PRIORIDAD_POR_DEFECTO, tiempoEstimado);
+    }
+
+    @Override
+    public int compareTo(Paquete otroPaquete) {
+        return this.codigo.compareTo(otroPaquete.getCodigo());
     }
 
     public String getCodigo() {
