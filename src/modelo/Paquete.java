@@ -87,11 +87,11 @@ public class Paquete implements Comparable<Paquete> {
 
     @Override
     public String toString() {
-        return "Paquete: " +
-                codigo + " | " +
-                destino + " | " +
-                peso + " | " +
-                prioridad + " | " +
+        return "Paquete: Código: " +
+                codigo + " | Destino: " +
+                destino + " | Peso: " +
+                peso + " | Prioridad: " +
+                prioridad + " | Tiempo estimado:" +
                 tiempoEstimado;
     }
 }
