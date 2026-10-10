@@ -18,22 +18,33 @@ public class CentroDistribucion {
     // Gestionar los repartidores por identificación.
     private Map<String, Repartidor> repartidores;
 
+    // Colas para las modalidades de atención
+    private Queue<Paquete> atencionOrdenLlegada;
+    private PriorityQueue<Paquete> despachoPrioritario;
+
     public CentroDistribucion() {
         this.paquetesOrdenRegistro = new ArrayList<>();
         this.paquetesPorCodigo = new HashMap<>();
         this.paquetesPorMunicipio = new HashMap<>();
         this.repartidores = new HashMap<>();
+        this.atencionOrdenLlegada = new ArrayDeque<>();
+        this.despachoPrioritario = new PriorityQueue<>(new comparadores.Despacho());
     }
 
     /**
      * Registra un nuevo paquete validando que el código no
-     * exista previamente.
+     * exista previamente y actualiza las colas de atención.
      * <p>
      *     Valida que si la llave {@code paquete.getDestino()}, no tiene
      *     un valor ({@code List<Paquete>}) asociado, instancia una lista antes
      *     de pasar a agregar el paquete.
      * </p>
-     * @param paquete el paquete asociado de tipo {@code Paquete} a agregar
+     * <p>
+     *     Inserta el paquete a las cola de atención por orden de llegada
+     *     ({@link #atencionOrdenLlegada}) y en la cola de despacho prioritario
+     *     ({@link #despachoPrioritario}).
+     * </p>
+     * @param paquete el paquete de tipo {@link Paquete} que se va a registrar en el sistema.
      *                al mapa.
      * @throws IllegalArgumentException si ya existe un paquete con ese
      *         código asociado a un valor.
@@ -48,13 +59,17 @@ public class CentroDistribucion {
 
         paquetesPorMunicipio.putIfAbsent(paquete.getDestino(), new ArrayList<>());
         paquetesPorMunicipio.get(paquete.getDestino()).add(paquete);
+
+        atencionOrdenLlegada.offer(paquete);
+        despachoPrioritario.offer(paquete);
     }
 
     /**
      * Registra un nuevo repartidor validando que la identidad no esté
      * repetida.
-     * @param repartidor el repartidor asociado de tipo {@code Repartidor}
+     * @param repartidor el repartidor de tipo {@link Repartidor}
      *                   que se agregará al mapa.
+     * @throws IllegalArgumentException si ya existe un repartidor con ese id.
      */
     public void registrarRepartidor(Repartidor repartidor) {
         if (repartidores.containsKey(repartidor.getIdentificacion())) {
@@ -65,8 +80,8 @@ public class CentroDistribucion {
 
     /**
      * Consulta el paquete por código. Necesidad 2.
-     * @param codigo el código de {@code Paquete} de tipo
-     * {@code String} a consultar
+     * @param codigo el código de {@link Paquete} de tipo
+     * {@code String} a consultar.
      * @return el paquete buscado por código o {@null} si no
      *         no encuentra
      */
@@ -117,5 +132,55 @@ public class CentroDistribucion {
 
     public List<Paquete> getPaquetesOrdenRegistro() {
         return paquetesOrdenRegistro;
+    }
+
+    /**
+     * Extrae el siguiente paquete según orden de llegada,
+     * sigue la restricción FIFO.
+     * <p>
+     *     {@code poll} extrae y elimina el elemento de la
+     *     cabeza de la cola.
+     * </p>
+     * @return el paquete de tipo {@link Paquete} que se extrajo
+     *         de la cola.
+     */
+    public Paquete obtSiguientePorOrdenLlegada() {
+        return atencionOrdenLlegada.poll();
+    }
+
+    /**
+     * Extrae el siguiente paquete según las reglas de prioridad
+     * establecidas en {@link comparadores.Despacho}.
+     *
+     * @return el paquete de tipo {@link Paquete} que se extrajo
+     *         de la cola
+     */
+    public Paquete obtSiguientePorPrioridad() {
+        return despachoPrioritario.poll();
+    }
+
+    public boolean asignarPaqueteRepartidor(String codigoPaquete, String idRepartidor) {
+        Paquete paquete = consultarPaquete(codigoPaquete);
+        Repartidor repartidor = repartidores.get(idRepartidor);
+
+        if (paquete == null || repartidor == null) {
+            throw new IllegalArgumentException("El paquete o repartidor no están en el sistema.");
+        }
+
+        if (!repartidor.isDisponible()) {
+            System.out.println("No se puede asignar: El repartidor " + repartidor.getNombre() + " no está disponible.");
+            return false;
+        }
+
+        if (!repartidor.getZona().equals(paquete.getDestino())) {
+            System.out.println("No se puede asignar: La zona del repartidor (" + repartidor.getZona() + ")" +
+                    "no coincide con el destino del paquete (" + paquete.getDestino() + ").");
+            return false;
+        }
+        repartidor.setEstadoOperativo(Repartidor.Estado.NO_DISPONIBLE);
+        System.out.println("Éxito: Paquete " + paquete.getCodigo() +
+                " asignado a " + repartidor.getNombre() +
+                " rumbo a " + paquete.getDestino());
+        return true;
     }
 }
