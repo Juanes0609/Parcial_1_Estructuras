@@ -1,8 +1,10 @@
 package estructuras;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
-public class ListaEnlazada<T> implements Coleccion<T> {
+public class ListaEnlazada<T> implements Coleccion<T>, Iterable<T> {
     private Nodo<T> cabeza;
     private Nodo<T> cola;
     private int tamano;
@@ -80,5 +82,30 @@ public class ListaEnlazada<T> implements Coleccion<T> {
             actual = actual.getSiguiente();
         }
         return sb.append("]").toString();
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new IteradorLista();
+    }
+
+    // Iterador interno: el código externo recorre la lista sin ver los nodos
+    private class IteradorLista implements Iterator<T> {
+        private Nodo<T> actual = cabeza;
+
+        @Override
+        public boolean hasNext() {
+            return actual != null;
+        }
+
+        @Override
+        public T next() {
+            if (actual == null) {
+                throw new NoSuchElementException("No hay más elementos");
+            }
+            T valor = actual.getValor();
+            actual = actual.getSiguiente();
+            return valor;
+        }
     }
 }

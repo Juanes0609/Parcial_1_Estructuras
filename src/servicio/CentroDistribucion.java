@@ -1,6 +1,7 @@
 package servicio;
 
 import modelo.Paquete;
+import estructuras.ListaEnlazada;
 import modelo.Repartidor;
 
 import java.util.*;
@@ -21,6 +22,7 @@ public class CentroDistribucion {
     // Colas para las modalidades de atención
     private Queue<Paquete> atencionOrdenLlegada;
     private PriorityQueue<Paquete> despachoPrioritario;
+    private ListaEnlazada<Paquete> historialEntregas;
 
     public CentroDistribucion() {
         this.paquetesOrdenRegistro = new ArrayList<>();
@@ -29,6 +31,7 @@ public class CentroDistribucion {
         this.repartidores = new HashMap<>();
         this.atencionOrdenLlegada = new ArrayDeque<>();
         this.despachoPrioritario = new PriorityQueue<>(new comparadores.Despacho());
+        this.historialEntregas = new ListaEnlazada<>();
     }
 
     /**
@@ -182,5 +185,30 @@ public class CentroDistribucion {
                 " asignado a " + repartidor.getNombre() +
                 " rumbo a " + paquete.getDestino());
         return true;
+    }
+
+    public void registrarEntrega(String codigo) {
+        Paquete paquete = paquetesPorCodigo.get(codigo);
+        if (paquete == null) {
+            throw new IllegalArgumentException("No existe un paquete con el código: " + codigo);
+        }
+        if (!paquetesOrdenRegistro.remove(paquete)) {
+            throw new IllegalArgumentException("El paquete " + codigo + " ya fue entregado");
+        }
+
+        List<Paquete> delMunicipio = paquetesPorMunicipio.get(paquete.getDestino());
+        delMunicipio.remove(paquete);
+        if (delMunicipio.isEmpty()) {
+            paquetesPorMunicipio.remove(paquete.getDestino());
+        }
+
+        atencionOrdenLlegada.remove(paquete);
+        despachoPrioritario.remove(paquete);
+
+        historialEntregas.agregar(paquete);
+    }
+
+    public ListaEnlazada<Paquete> getHistorialEntregas() {
+        return historialEntregas;
     }
 }
