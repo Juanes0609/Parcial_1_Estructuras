@@ -24,6 +24,8 @@ public class CentroDistribucion {
     private PriorityQueue<Paquete> despachoPrioritario;
     private ListaEnlazada<Paquete> historialEntregas;
 
+    private Map<String, Repartidor> asignaciones;
+
     public CentroDistribucion() {
         this.paquetesOrdenRegistro = new ArrayList<>();
         this.paquetesPorCodigo = new HashMap<>();
@@ -32,6 +34,7 @@ public class CentroDistribucion {
         this.atencionOrdenLlegada = new ArrayDeque<>();
         this.despachoPrioritario = new PriorityQueue<>(new comparadores.Despacho());
         this.historialEntregas = new ListaEnlazada<>();
+        this.asignaciones = new HashMap<>();
     }
 
     /**
@@ -148,7 +151,10 @@ public class CentroDistribucion {
      *         de la cola.
      */
     public Paquete obtSiguientePorOrdenLlegada() {
-        return atencionOrdenLlegada.poll();
+        while (!atencionOrdenLlegada.isEmpty()) {
+            return atencionOrdenLlegada.poll();
+        }
+        return null;
     }
 
     /**
@@ -159,7 +165,10 @@ public class CentroDistribucion {
      *         de la cola
      */
     public Paquete obtSiguientePorPrioridad() {
-        return despachoPrioritario.poll();
+        while (!despachoPrioritario.isEmpty()) {
+            return despachoPrioritario.poll();
+        }
+        return null;
     }
 
     public boolean asignarPaqueteRepartidor(String codigoPaquete, String idRepartidor) {
@@ -181,19 +190,21 @@ public class CentroDistribucion {
             return false;
         }
         repartidor.setEstadoOperativo(Repartidor.Estado.NO_DISPONIBLE);
+        asignaciones.put(codigoPaquete, repartidor);
+
         System.out.println("Éxito: Paquete " + paquete.getCodigo() +
                 " asignado a " + repartidor.getNombre() +
                 " rumbo a " + paquete.getDestino());
         return true;
     }
 
-    public void registrarEntrega(String codigo) {
-        Paquete paquete = paquetesPorCodigo.get(codigo);
+    public void registrarEntrega(String codigoPaquete) {
+        Paquete paquete = paquetesPorCodigo.get(codigoPaquete);
         if (paquete == null) {
-            throw new IllegalArgumentException("No existe un paquete con el código: " + codigo);
+            throw new IllegalArgumentException("No existe un paquete con el código: " + codigoPaquete);
         }
         if (!paquetesOrdenRegistro.remove(paquete)) {
-            throw new IllegalArgumentException("El paquete " + codigo + " ya fue entregado");
+            throw new IllegalArgumentException("El paquete " + codigoPaquete + " ya fue entregado");
         }
 
         List<Paquete> delMunicipio = paquetesPorMunicipio.get(paquete.getDestino());
@@ -206,6 +217,13 @@ public class CentroDistribucion {
         despachoPrioritario.remove(paquete);
 
         historialEntregas.agregar(paquete);
+
+        Repartidor repartidor = asignaciones.remove(codigoPaquete);
+
+        if (repartidor != null) {
+            repartidor.setEstadoOperativo(Repartidor.Estado.DISPONIBLE);
+            System.out.println("El repartidor " + repartidor.getNombre() + " vuelve a estar DISPONIBLE.");
+        }
     }
 
     public ListaEnlazada<Paquete> getHistorialEntregas() {

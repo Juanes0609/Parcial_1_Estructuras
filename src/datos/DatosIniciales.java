@@ -34,7 +34,7 @@ public class DatosIniciales {
             // Pesos variados entre 1.5 y 16.0
             double peso = 1.5 + (i % 15);
 
-            int prioridad = (i % 5) + 1;
+            int prioridad = ThreadLocalRandom.current().nextInt(1,6);
 
             int tiempoEstimado = 20 + (i * 4);
 
